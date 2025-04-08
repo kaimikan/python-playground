@@ -176,6 +176,51 @@ def solve_simple_jssp():
                 output += f'  Job {task["job"]} Task {task["task"]}: Start={task["start"]}, End={task["end"]}, Duration={task["duration"]}\n'
         print(output)
 
+        # --- Gantt Chart Visualization ---
+        import matplotlib
+        import matplotlib.pyplot as plt
+        import numpy as np
+        import matplotlib.patches as mpatches
+
+        # Get the colormap
+        cmap = matplotlib.colormaps.get_cmap('tab20')
+
+        # Sample distinct colors for each job
+        colors = [cmap(i / num_jobs) for i in range(num_jobs)]  # list of RGBA colors
+
+        fig, ax = plt.subplots(figsize=(10, 6))
+        yticks = []
+        yticklabels = []
+
+        for machine_id in all_machines:
+            yticks.append(machine_id)
+            yticklabels.append(f'Machine {machine_id}')
+
+            for task in assigned_jobs[machine_id]:
+                start = task['start']
+                duration = task['duration']
+                job_id = task['job']
+                task_label = f'Job {job_id}\nT{task["task"]}'
+
+                ax.broken_barh([(start, duration)], (machine_id - 0.4, 0.8),
+                               facecolors=colors[job_id], edgecolor='black')
+                ax.text(start + duration / 2, machine_id,
+                        task_label, ha='center', va='center', fontsize=8, color='black')
+
+        ax.set_yticks(yticks)
+        ax.set_yticklabels(yticklabels)
+        ax.set_xlabel('Time')
+        ax.set_title('JSSP Gantt Chart')
+        ax.grid(True, axis='x', linestyle='--', alpha=0.6)
+
+        # Legend
+        legend_patches = [mpatches.Patch(color=colors[j], label=f'Job {j}') for j in all_jobs]
+        ax.legend(handles=legend_patches, title="Jobs", loc='upper right')
+
+        plt.tight_layout()
+        plt.show()
+
+
     elif status == cp_model.INFEASIBLE:
         # If the solver determined the problem has no possible solution under the given constraints.
         print('No solution found. The problem is infeasible.')
